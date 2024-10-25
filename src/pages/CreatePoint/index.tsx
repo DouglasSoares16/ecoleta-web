@@ -1,6 +1,6 @@
 import React, { useEffect, useState, ChangeEvent } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
-import { LatLng } from "leaflet";
+import { Map, Marker, TileLayer } from "react-leaflet";
+import { LeafletMouseEvent } from "leaflet";
 import axios from "axios";
 import "./styles.css";
 
@@ -21,22 +21,15 @@ export function CreatePoint() {
   const [ufSelected, setUfSelected] = useState("0");
   const [citySelected, setCitySelected] = useState("0");
 
-  const [position, setPosition] = useState<LatLng | null>(null);
-  const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
+  const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const userPos = new LatLng(latitude, longitude);
+    navigator.geolocation.getCurrentPosition(position => {
+      const { latitude, longitude } = position.coords;
 
-        setUserLocation(userPos);
-        setPosition(userPos); // Centraliza o mapa na localização do usuário
-      },
-      (error) => {
-        console.error("Erro ao obter localização:", error);
-      }
-    );
+      setInitialPosition([latitude, longitude]);
+    });
   }, []);
 
 
@@ -78,14 +71,11 @@ export function CreatePoint() {
     setCitySelected(event.target.value);
   }
 
-  function MapClickHandler({ setPosition }: { setPosition: (pos: LatLng) => void }) {
-    useMapEvents({
-      click(e) {
-        setPosition(e.latlng); // Atualiza a posição do marcador para a posição do clique
-      }
-    });
-
-    return null;
+  function handleMapClick(event: LeafletMouseEvent) {
+    setSelectedPosition([
+      event.latlng.lat,
+      event.latlng.lng,
+    ])
   }
 
   return (
@@ -144,23 +134,14 @@ export function CreatePoint() {
             <span>Selecione o endereço no mapa</span>
           </legend>
 
-          <MapContainer center={userLocation || [-27.2092052, -49.6401092]} zoom={13}>
+          <Map center={initialPosition} zoom={15} onClick={handleMapClick}>
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
+            />  
 
-            {/* Componente para capturar clique no mapa */}
-            <MapClickHandler setPosition={setPosition} />
-
-            {position && (
-              <Marker position={position}>
-                <Popup>
-                  A pretty CSS3 popup. <br /> Easily customizable.
-                </Popup>
-              </Marker>
-            )}
-          </MapContainer>
+            <Marker position={selectedPosition} />
+          </Map>
 
           <div className="field-group">
             <div className="field">
