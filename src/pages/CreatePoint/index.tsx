@@ -20,9 +20,16 @@ export function CreatePoint() {
 
   const [ufSelected, setUfSelected] = useState("0");
   const [citySelected, setCitySelected] = useState("0");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
   const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
+
+  const [formData, SetFormData] = useState({
+    name: "",
+    email: "",
+    whatsapp: "",
+  });
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(position => {
@@ -63,6 +70,7 @@ export function CreatePoint() {
     fetchCitiesByUf();
   }, [ufSelected]);
 
+  // Handlers
   function handleSelectUf(event: ChangeEvent<HTMLSelectElement>) {
     setUfSelected(event.target.value);
   }
@@ -76,6 +84,25 @@ export function CreatePoint() {
       event.latlng.lat,
       event.latlng.lng,
     ])
+  }
+
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
+    const { name, value } = event.target;
+
+    SetFormData({ ...formData, [name]: value });
+  }
+
+  function handleSelectItem(id: string) {
+    // Se tiver o findIndex retorna 'true | 0' se não, retorna "false | -1"
+    const alreadySelected = selectedItems.findIndex(item => item === id);
+
+    if (alreadySelected >= 0) {
+      const filteredItems = selectedItems.filter(item => item !== id);
+
+      setSelectedItems(filteredItems);
+    } else {
+      setSelectedItems([...selectedItems, id]);
+    }
   }
 
   return (
@@ -103,6 +130,7 @@ export function CreatePoint() {
               type="text"
               name="name"
               id="name"
+              onChange={handleInputChange}
             />
           </div>
 
@@ -113,6 +141,7 @@ export function CreatePoint() {
                 type="email"
                 name="email"
                 id="email"
+                onChange={handleInputChange}
               />
             </div>
 
@@ -122,6 +151,7 @@ export function CreatePoint() {
                 type="text"
                 name="whatsapp"
                 id="whatsapp"
+                onChange={handleInputChange}
               />
             </div>
           </div>
@@ -198,7 +228,11 @@ export function CreatePoint() {
             {
               items.map(item => {
                 return (
-                  <li key={item.id}>
+                  <li 
+                    key={item.id} 
+                    onClick={() => handleSelectItem(item.id)}
+                    className={selectedItems.includes(item.id) ? "selected" : ""}
+                  >
                     <img src={item.image_url} alt={item.title} />
 
                     <span>{item.title}</span>
